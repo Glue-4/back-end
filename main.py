@@ -9,19 +9,19 @@ import json
 
 app = Flask(__name__)
 
-# Konfigurasi koneksi MySQL
+# Konfigurasi MySQL
 config = {
-    'user': 'root',      # Ganti dengan username MySQL Anda
-    'password': '',      # Ganti dengan password MySQL Anda
+    'user': 'root', 
+    'password': '',
     'host': 'localhost',
-    'database': 'lokergo_test',  # Ganti dengan nama database Anda
+    'database': 'lokergo_test',
     'raise_on_warnings': True
 }
 
 def get_table_fields(cursor, table_name):
     cursor.execute(f"DESCRIBE {table_name}")
     columns = cursor.fetchall()
-    field_names = [column[0] for column in columns]  # Hanya mengambil nama field
+    field_names = [column[0] for column in columns]
     return field_names
 
 def get_database_schema(cursor):
@@ -32,7 +32,7 @@ def get_database_schema(cursor):
         schema[table_name] = get_table_fields(cursor, table_name)
     return schema
 
-# Setup OpenAI API key
+# Setup OpenAI API key dari ENV
 
 load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
@@ -70,14 +70,14 @@ def query():
         data = request.json
         question = data['question']
         
-        # Koneksi ke database
+        # Konek ke database
         cnx = mysql.connector.connect(**config)
         cursor = cnx.cursor()
 
-        # Dapatkan skema database
+        # Ngambil Skema Database
         schema = get_database_schema(cursor)
 
-        # Generate prompt untuk pertanyaan SQL menggunakan OpenAI GPT-3
+        # Bikin pertanyaan
         schema_str = '\n'.join(f"- {table}: {', '.join(fields)}" for table, fields in schema.items())
         prompt = f"""Berdasarkan skema database (lokergo_test) dibawah, tuliskan query SQL yang dapat menjawab pertanyaan user berikut, tulis query SQL tanpa penjelasan apapun:
         {schema_str}
