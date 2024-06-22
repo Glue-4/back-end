@@ -1,8 +1,11 @@
+import os
 from flask import Flask, jsonify, request
 import mysql.connector
 from mysql.connector import errorcode
 from langchain_openai import OpenAI
+from dotenv import load_dotenv
 import json
+
 
 app = Flask(__name__)
 
@@ -30,7 +33,9 @@ def get_database_schema(cursor):
     return schema
 
 # Setup OpenAI API key
-openai_api_key = ''
+
+load_dotenv()
+openai_api_key = os.getenv("OPENAI_API_KEY")
 llm = OpenAI(api_key=openai_api_key)
 
 # Route untuk endpoint '/'
@@ -89,12 +94,10 @@ def query():
         cursor.execute(sql_query)
         result = cursor.fetchall()
 
-
         print(result)
 
         cursor.close()
         cnx.close()
-
 
         return jsonify({"sql_query": sql_query, "result": result})
     
