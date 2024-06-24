@@ -45,7 +45,7 @@ Pada penggunaannya gunakan aplikasi **Postman** atau sejenisnya, gunakan templat
 }
 ```
 
-Isi bagian kosong dengan pertanyaan dan data dari database MySQL milikmu
+Isi bagian kosong dengan pertanyaan dan data dari database MySQL milikmu!
 
 ## ❗ Hal Penting 
 
@@ -55,3 +55,4 @@ Perhatikan beberapa hal berikut!
 
 - Masukkan data dari database yang valid!.
 
+- Port forwarding diatur pada port `8000`, kamu bisa menggantinya pada file `main.py` sesukamu. *(re-build image)*
