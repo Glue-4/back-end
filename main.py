@@ -4,17 +4,21 @@ import mysql.connector
 from mysql.connector import errorcode
 from langchain_openai import OpenAI
 from dotenv import load_dotenv
-import json
 
 
 app = Flask(__name__)
 
 # Konfigurasi MySQL
+user = os.getenv("DB_USER")
+password = os.getenv("DB_PASSWORD")
+host = os.getenv("DB_HOST")
+database = os.getenv("DB_NAME")
+
 config = {
-    'user': 'root', 
-    'password': '',
-    'host': 'localhost',
-    'database': 'lokergo_test',
+    'user': user, 
+    'password': password,
+    'host': host,
+    'database': database,
     'raise_on_warnings': True
 }
 
@@ -39,28 +43,9 @@ openai_api_key = os.getenv("OPENAI_API_KEY")
 llm = OpenAI(api_key=openai_api_key)
 
 # Route untuk endpoint '/'
-# @app.route('/')
-# def index():
-#     try:
-#         cnx = mysql.connector.connect(**config)
-#         cursor = cnx.cursor()
-
-#         schema = get_database_schema(cursor)
-
-#         cursor.close()
-#         cnx.close()
-
-#         return jsonify(schema)
-    
-#     except mysql.connector.Error as err:
-#         if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-#             return jsonify({"error": "Salah username atau password, cek lagi!"})
-#         elif err.errno == errorcode.ER_BAD_DB_ERROR:
-#             return jsonify({"error": "Databasenya ngga ada!"})
-#         else:
-#             return jsonify({"error": str(err)})
-#     except Exception as e:
-#         return jsonify({"error": str(e)})
+@app.route('/')
+def index():
+    return jsonify({"message": "Selamat datang di API Backend Chat with MySQL (Kelompok Glue 4)"})
 
 # Route untuk endpoint '/query'
 @app.route('/query', methods=['POST'])
@@ -79,14 +64,14 @@ def query():
 
         # Bikin pertanyaan
         schema_str = '\n'.join(f"- {table}: {', '.join(fields)}" for table, fields in schema.items())
-        prompt = f"""Berdasarkan skema database (lokergo_test) dibawah, tuliskan query SQL yang dapat menjawab pertanyaan user berikut, tulis query SQL tanpa penjelasan apapun:
+        prompt_query = f"""Berdasarkan skema database (lokergo_test) dibawah, tuliskan query SQL yang dapat menjawab pertanyaan user berikut, tulis query SQL tanpa penjelasan apapun:
         {schema_str}
         
         Pertanyaan user: {question}"""
 
-        response = llm(prompt)
+        response_query = llm(prompt_query)
 
-        sql_query = response.replace("?", "").replace("\\n", "\n").strip()
+        sql_query = response_query.replace("?", "").replace("\\n", "\n").strip()
 
         print(sql_query)
 
@@ -99,7 +84,12 @@ def query():
         cursor.close()
         cnx.close()
 
-        return jsonify({"sql_query": sql_query, "result": result})
+        prompt_jawaban = f"""Berdasarkan pertanyaan user dibawah dan berdasarkan data yang sudah di dapat dari database (lokergo_test), berikan kalimat jawaban yang sesuai:
+        Pertanyaan user: {question}
+        Hasil Query: {result}"""
+
+        response_jawaban = llm(prompt_jawaban)
+        return jsonify({"sql_query": sql_query, "result": result, "jawaban": response_jawaban})
     
     except mysql.connector.Error as err:
         if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
