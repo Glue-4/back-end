@@ -32,7 +32,7 @@ Jalankan docker menggunakan docker compose agar **environment** dan **port forwa
 ```
 ## 🖥️ Contoh Penggunaan
 
-Pada penggunaannya gunakan aplikasi **Postman** atau sejenisnya, gunakan template file json dibawah ini untuk mengecek API!
+Pada penggunaannya gunakan aplikasi **Postman** atau sejenisnya, hubungkan ke url `http://localhost:8000/query` atau url lainnya *(Jika diatur berbeda)*, gunakan template file json dibawah ini untuk menggunakan API!
 
 ```
 {
