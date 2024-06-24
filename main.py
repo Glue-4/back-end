@@ -8,20 +8,6 @@ from dotenv import load_dotenv
 
 app = Flask(__name__)
 
-# Konfigurasi MySQL
-user = os.getenv("DB_USER")
-password = os.getenv("DB_PASSWORD")
-host = os.getenv("DB_HOST")
-database = os.getenv("DB_NAME")
-
-config = {
-    'user': user, 
-    'password': password,
-    'host': host,
-    'database': database,
-    'raise_on_warnings': True
-}
-
 def get_table_fields(cursor, table_name):
     cursor.execute(f"DESCRIBE {table_name}")
     columns = cursor.fetchall()
@@ -54,6 +40,24 @@ def query():
         # Ambil data JSON dari request
         data = request.json
         question = data['question']
+
+        # Konfigurasi MySQL
+        user = data['user']
+        password = data['password']
+        host = data['host']
+        port = data['port']
+        database = data['database']
+
+        config = {
+            'user': user, 
+            'password': password,
+            'host': host,
+            'port': port,
+            'database': database,
+            'raise_on_warnings': True
+        }
+        
+
         
         # Konek ke database
         cnx = mysql.connector.connect(**config)
@@ -64,7 +68,7 @@ def query():
 
         # Bikin pertanyaan
         schema_str = '\n'.join(f"- {table}: {', '.join(fields)}" for table, fields in schema.items())
-        prompt_query = f"""Berdasarkan skema database (lokergo_test) dibawah, tuliskan query SQL yang dapat menjawab pertanyaan user berikut, tulis query SQL tanpa penjelasan apapun:
+        prompt_query = f"""Berdasarkan skema database ({database}) dibawah, tuliskan query SQL yang dapat menjawab pertanyaan user berikut, tulis query SQL tanpa penjelasan apapun:
         {schema_str}
         
         Pertanyaan user: {question}"""
@@ -84,12 +88,12 @@ def query():
         cursor.close()
         cnx.close()
 
-        prompt_jawaban = f"""Berdasarkan pertanyaan user dibawah dan berdasarkan data yang sudah di dapat dari database (lokergo_test), berikan kalimat jawaban yang sesuai:
+        prompt_jawaban = f"""Berdasarkan pertanyaan user dibawah dan berdasarkan data yang sudah di dapat dari database ({database}), berikan kalimat jawaban yang sesuai:
         Pertanyaan user: {question}
         Hasil Query: {result}"""
 
         response_jawaban = llm(prompt_jawaban)
-        return jsonify({"sql_query": sql_query, "result": result, "jawaban": response_jawaban})
+        return jsonify({"jawaban": response_jawaban})
     
     except mysql.connector.Error as err:
         if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
@@ -102,4 +106,4 @@ def query():
         return jsonify({"error": str(e)})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
