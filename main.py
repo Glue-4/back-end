@@ -54,7 +54,8 @@ def query():
             'host': host,
             'port': port,
             'database': database,
-            'raise_on_warnings': True
+            'raise_on_warnings': True,
+            'ssl_disabled': True
         }
         
 
@@ -75,7 +76,10 @@ def query():
 
         response_query = llm(prompt_query)
 
+        cut = response_query.find("SELECT")
+
         sql_query = response_query.replace("?", "").replace("\\n", "\n").strip()
+        sql_query = sql_query[cut:]
 
         print(sql_query)
 
