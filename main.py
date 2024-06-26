@@ -76,15 +76,16 @@ def query():
 
         response_query = llm(prompt_query)
 
-        cut = response_query.find("SELECT")
-
         sql_query = response_query.replace("?", "").replace("\\n", "\n").strip()
-        sql_query = sql_query[cut:]
 
-        print(sql_query)
+        cut = sql_query.find("SELECT")
+
+        sql_query_cleaned = sql_query[cut:]
+
+        print(sql_query_cleaned)
 
         # Eksekusi query
-        cursor.execute(sql_query)
+        cursor.execute(sql_query_cleaned)
         result = cursor.fetchall()
 
         print(result)
