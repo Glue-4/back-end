@@ -105,7 +105,7 @@ def query():
         else:
             sql_query_cleaned = sql_query
 
-        print(sql_query, sql_query_cleaned)
+        print(sql_query_cleaned)
 
         # Eksekusi query
         cursor.execute(sql_query_cleaned)
