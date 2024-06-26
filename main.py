@@ -108,7 +108,7 @@ def query():
         print(sql_query, sql_query_cleaned)
 
         # Eksekusi query
-        cursor.execute(sql_query)
+        cursor.execute(sql_query_cleaned)
         result = cursor.fetchall()
 
         print(result)
