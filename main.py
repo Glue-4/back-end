@@ -4,23 +4,35 @@ import mysql.connector
 from mysql.connector import errorcode
 from langchain_openai import OpenAI
 from dotenv import load_dotenv
+import re
 
 
 app = Flask(__name__)
 
 def get_table_fields(cursor, table_name):
-    cursor.execute(f"DESCRIBE {table_name}")
-    columns = cursor.fetchall()
-    field_names = [column[0] for column in columns]
-    return field_names
+    try:
+        cursor.execute(f"DESCRIBE {table_name};")
+        columns = cursor.fetchall()
+        field_names = [column[0].decode('utf-8') if isinstance(column[0], bytearray) else column[0] for column in columns]
+        return field_names
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+        return []
 
 def get_database_schema(cursor):
-    cursor.execute("SHOW TABLES")
-    tables = cursor.fetchall()
-    schema = {}
-    for (table_name,) in tables:
-        schema[table_name] = get_table_fields(cursor, table_name)
-    return schema
+    try:
+        cursor.execute("SHOW TABLES;")
+        tables = cursor.fetchall()
+        schema = {}
+        for (table_name,) in tables:
+            table_name_str = table_name.decode('utf-8') if isinstance(table_name, bytearray) else table_name
+            schema[table_name_str] = get_table_fields(cursor, table_name_str)
+        return schema
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+        return {}
+
+
 
 # Setup OpenAI API key dari ENV
 
@@ -65,7 +77,14 @@ def query():
         cursor = cnx.cursor()
 
         # Ngambil Skema Database
-        schema = get_database_schema(cursor)
+        # schema = get_database_schema(cursor)
+
+        try:
+            schema = get_database_schema(cursor)
+        except Exception as e:
+            print(e)
+            return jsonify({"error db schema": str(e)})
+        
 
         # Bikin pertanyaan
         schema_str = '\n'.join(f"- {table}: {', '.join(fields)}" for table, fields in schema.items())
@@ -76,16 +95,20 @@ def query():
 
         response_query = llm(prompt_query)
 
+        # Bersihkan query
         sql_query = response_query.replace("?", "").replace("\\n", "\n").strip()
 
-        cut = sql_query.find("SELECT")
+        match = re.search(r'\bSELECT\b', sql_query, re.IGNORECASE)
 
-        sql_query_cleaned = sql_query[cut:]
+        if match:
+            sql_query_cleaned = sql_query[match.start():]
+        else:
+            sql_query_cleaned = sql_query
 
-        print(sql_query_cleaned)
+        print(sql_query, sql_query_cleaned)
 
         # Eksekusi query
-        cursor.execute(sql_query_cleaned)
+        cursor.execute(sql_query)
         result = cursor.fetchall()
 
         print(result)
